@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install psycopg2
-
+        pip install flask  # Si usas Flask
 
     - name: Start the application
       run: |
