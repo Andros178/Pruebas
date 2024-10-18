@@ -3,10 +3,10 @@ name: SQL Injection Test with sqlmap
 on:
   push:
     branches:
-      - main
+      - testeo
   pull_request:
     branches:
-      - main
+      - testeo
 
 jobs:
   sqlmap-test:
