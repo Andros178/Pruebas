@@ -1,27 +1,28 @@
-name: SQL Injection Test with sqlmap
+name: Integration Test with PostgreSQL
 
 on:
   push:
     branches:
-      - testeo
-  pull_request:
-    branches:
-      - testeo
+      - main
 
 jobs:
-  sqlmap-test:
+  integration-test:
     runs-on: ubuntu-latest
 
     services:
-      
-        postgres:
-          image: postgres:latest
-          env:
-            POSTGRES_DB: db_mzlr
-            POSTGRES_USER: db_mzlr_user
-            POSTGRES_PASSWORD: Ck3u4ecUVP6awJmhC08NHegTwbyoQPJn
-        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=5
-
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: db_mzlr
+          POSTGRES_USER: db_mzlr_user
+          POSTGRES_PASSWORD: Ck3u4ecUVP6awJmhC08NHegTwbyoQPJn
+        options: > 
+          --health-cmd="pg_isready -U db_mzlr_user" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
 
     steps:
     - name: Checkout code
@@ -35,29 +36,13 @@ jobs:
     - name: Install dependencies
       run: |
         pip install psycopg2
-        pip install flask  # Si usas Flask
+        pip install unittest
 
-    - name: Start the application
+    - name: Create database schema
       run: |
-        python app.py &
-      env:
-        DATABASE_URL: postgres://db_mzlr_user:Ck3u4ecUVP6awJmhC08NHegTwbyoQPJn@localhost:5432/db_mzlr
+        python app.py  # Asegúrate de que este archivo crea las tablas necesarias
 
-    - name: Wait for server to be ready
-      run: sleep 15
-
-    - name: Install sqlmap
+    - name: Run integration tests
       run: |
-        sudo apt-get update
-        sudo apt-get install -y sqlmap
+        python -m unittest discover -s . -p "test_app.py"
 
-    - name: Run sqlmap test
-      run: |
-        sqlmap -u "http://localhost:8000/users?id=1" --batch --dump
-
-    - name: Check for vulnerabilities
-      run: |
-        if [ -f dump.sql ]; then
-          echo "Vulnerabilities found."
-        else
-          echo "No vulnerabilities found."
