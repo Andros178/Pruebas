@@ -33,7 +33,7 @@ def get_user_vulnerable():
     finally:
         if connection is not None:
             connection.close()
-            print("hola que tal")
+            print("hola que tal a todos")
 
 if __name__ == "__main__":
     get_user_vulnerable()
