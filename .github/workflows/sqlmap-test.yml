@@ -1,0 +1,67 @@
+name: SQL Injection Test with sqlmap
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sqlmap-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: db_mzlr
+          POSTGRES_USER: db_mzlr_user
+          POSTGRES_PASSWORD: Ck3u4ecUVP6awJmhC08NHegTwbyoQPJn
+        options: > 
+          --health-cmd="pg_isready -U db_mzlr_user" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install psycopg2
+
+
+    - name: Start the application
+      run: |
+        python app.py &
+      env:
+        DATABASE_URL: postgres://db_mzlr_user:Ck3u4ecUVP6awJmhC08NHegTwbyoQPJn@localhost:5432/db_mzlr
+
+    - name: Wait for server to be ready
+      run: sleep 15
+
+    - name: Install sqlmap
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sqlmap
+
+    - name: Run sqlmap test
+      run: |
+        sqlmap -u "http://localhost:8000/users?id=1" --batch --dump
+
+    - name: Check for vulnerabilities
+      run: |
+        if [ -f dump.sql ]; then
+          echo "Vulnerabilities found."
+        else
+          echo "No vulnerabilities found."
